@@ -1,0 +1,13 @@
+name: eecs504-medical
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch
+  - numpy
+  - nibabel
+  - matplotlib
+  - pip
+  - pip:
+      - wandb

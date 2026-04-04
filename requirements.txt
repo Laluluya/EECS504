@@ -1,5 +1,0 @@
-torch
-nibabel
-numpy
-matplotlib
-wandb

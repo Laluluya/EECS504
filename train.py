@@ -155,7 +155,10 @@ def maybe_init_wandb(args: argparse.Namespace):
     try:
         import wandb
     except ImportError as exc:
-        raise RuntimeError("wandb is not installed. Run `pip install -r requirements.txt` in the project venv.") from exc
+        raise RuntimeError(
+            "wandb is not installed. Recreate the conda env with `conda env create -f environment.yml` "
+            "or install it into your active conda env."
+        ) from exc
 
     run = wandb.init(
         project=args.wandb_project,
