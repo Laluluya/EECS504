@@ -1,13 +1,17 @@
 # Cardiac MRI U-Net Baseline
 
-Minimal 2D U-Net training code for the local ACDC-style cardiac MRI dataset in this workspace.
+Minimal 2D U-Net training code for the official ACDC-style cardiac MRI dataset from the Human Heart Project:
+
+[Human Heart Project dataset page](https://humanheart-project.creatis.insa-lyon.fr/database/#collection/637218c173e9f0047faa00fb)
 
 ## Dataset expectation
 
-The scripts scan both:
+Download the official dataset and organize it with the standard split:
 
-- `Resources/`
-- `Resources (1)/`
+- `training/`
+- `testing/`
+
+The training script uses `training/` by default.
 
 Each patient directory should contain:
 
@@ -15,7 +19,12 @@ Each patient directory should contain:
 - `patientXXX_frameYY_gt.nii.gz`
 - `Info.cfg`
 
-Only ED/ES frames with `*_gt.nii.gz` are used for supervised training.
+The `training/` set is used for supervised learning. Only ED/ES frames with `*_gt.nii.gz` are used for training.
+
+The `testing/` set is used for inference on full cine volumes such as:
+
+- `patientXXX_4d.nii.gz`
+- `Info.cfg`
 
 ## Install
 
@@ -41,7 +50,7 @@ python train.py --epochs 20 --batch-size 8 --save-dir runs/full
 ```bash
 python predict_4d.py \
   --checkpoint runs/full/best.pt \
-  --input "Resources/patient101/patient101_4d.nii.gz" \
+  --input "testing/patient101/patient101_4d.nii.gz" \
   --output-dir runs/patient101_pred
 ```
 
@@ -50,7 +59,7 @@ python predict_4d.py \
 ```bash
 python extract_rv_curve.py \
   --checkpoint runs/full/best.pt \
-  --input "Resources/patient101/patient101_4d.nii.gz" \
+  --input "testing/patient101/patient101_4d.nii.gz" \
   --output-dir runs/patient101_rv_curve
 ```
 

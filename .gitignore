@@ -7,8 +7,9 @@ env/
 
 Resources/
 Resources (1)/
-Resources.zip
-Resources (1).zip
+training/
+testing/
+*.zip
 
 runs/
 wandb/
