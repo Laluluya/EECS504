@@ -1,0 +1,21 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+.venv/
+env/
+
+Resources/
+Resources (1)/
+Resources.zip
+Resources (1).zip
+
+runs/
+wandb/
+
+*.pt
+*.nii
+*.nii.gz
+*.png
+*.csv
+*.json
