@@ -32,7 +32,7 @@ from model import UNet2D
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train a 2D U-Net on the local cardiac MRI dataset.")
     parser.add_argument("--data-roots", nargs="+", default=["training"])
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--image-size", type=int, default=256)

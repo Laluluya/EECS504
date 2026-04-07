@@ -42,7 +42,7 @@ python train.py --epochs 1 --batch-size 4 --max-train-slices 24 --max-val-slices
 ## Full-ish local run
 
 ```bash
-python train.py --epochs 20 --batch-size 8 --save-dir runs/full
+python train.py --epochs 50 --batch-size 8 --save-dir runs/full
 ```
 
 ## Predict a 4D cine volume
@@ -52,6 +52,19 @@ python predict_4d.py \
   --checkpoint runs/full/best.pt \
   --input "testing/patient101/patient101_4d.nii.gz" \
   --output-dir runs/patient101_pred
+```
+
+## Evaluate Labeled Testing Frames
+
+ACDC labels only the ED/ES frames. This evaluates Dice on the available
+`patientXXX_frameYY.nii.gz` + `patientXXX_frameYY_gt.nii.gz` pairs and does not
+require labels for every frame in `patientXXX_4d.nii.gz`.
+
+```bash
+python evaluate_labeled_frames.py \
+  --checkpoint runs/full/best.pt \
+  --data-root testing \
+  --output-dir runs/testing_labeled_eval
 ```
 
 ## RV area curve
@@ -70,13 +83,22 @@ This writes:
 - `area_curve.png`
 - `summary.json`
 
+Batch extraction for every testing patient:
+
+```bash
+python batch_extract_rv_curves.py \
+  --checkpoint runs/full/best.pt \
+  --data-root testing \
+  --output-dir runs/testing_rv_curves
+```
+
 ## Weights & Biases
 
 Online logging:
 
 ```bash
 python train.py \
-  --epochs 20 \
+  --epochs 50 \
   --batch-size 8 \
   --save-dir runs/wandb_run \
   --use-wandb \
@@ -89,7 +111,7 @@ Offline logging:
 
 ```bash
 python train.py \
-  --epochs 20 \
+  --epochs 50 \
   --batch-size 8 \
   --save-dir runs/wandb_offline \
   --use-wandb \
