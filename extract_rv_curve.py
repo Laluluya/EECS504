@@ -44,8 +44,9 @@ def write_rv_curve_outputs(
         int((predictions[:, :, :, frame_idx - 1] == target_class).sum())
         for frame_idx in frame_indices
     ]
-    ed_frame = int(np.argmax(frame_areas)) + 1
-    es_frame = int(np.argmin(frame_areas)) + 1
+    max_frame = int(np.argmax(frame_areas)) + 1
+    min_frame = int(np.argmin(frame_areas)) + 1
+    info_cfg = parse_info_cfg(input_path.parent / "Info.cfg")
 
     csv_path = output_dir / "frame_areas.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as f:
@@ -57,8 +58,30 @@ def write_rv_curve_outputs(
     curve_path = output_dir / "area_curve.png"
     plt.figure(figsize=(9, 4))
     plt.plot(frame_indices, frame_areas, marker="o", linewidth=1.8)
-    plt.scatter([ed_frame], [frame_areas[ed_frame - 1]], color="red", label=f"max frame={ed_frame}")
-    plt.scatter([es_frame], [frame_areas[es_frame - 1]], color="blue", label=f"min frame={es_frame}")
+    plt.scatter([max_frame], [frame_areas[max_frame - 1]], color="red", label=f"pred max frame={max_frame}")
+    plt.scatter([min_frame], [frame_areas[min_frame - 1]], color="blue", label=f"pred min frame={min_frame}")
+    if "ED" in info_cfg and 1 <= info_cfg["ED"] <= len(frame_areas):
+        gt_ed_frame = info_cfg["ED"]
+        plt.scatter(
+            [gt_ed_frame],
+            [frame_areas[gt_ed_frame - 1]],
+            facecolors="none",
+            edgecolors="darkred",
+            s=130,
+            linewidths=2.2,
+            label=f"GT ED frame={gt_ed_frame}",
+        )
+    if "ES" in info_cfg and 1 <= info_cfg["ES"] <= len(frame_areas):
+        gt_es_frame = info_cfg["ES"]
+        plt.scatter(
+            [gt_es_frame],
+            [frame_areas[gt_es_frame - 1]],
+            facecolors="none",
+            edgecolors="navy",
+            s=130,
+            linewidths=2.2,
+            label=f"GT ES frame={gt_es_frame}",
+        )
     plt.xlabel("Frame (1-based)")
     plt.ylabel("Predicted area (pixels)")
     plt.title(f"Area curve for {CLASS_NAMES.get(target_class, target_class)}")
@@ -68,7 +91,6 @@ def write_rv_curve_outputs(
     plt.savefig(curve_path, dpi=180)
     plt.close()
 
-    info_cfg = parse_info_cfg(args.input.parent / "Info.cfg")
     summary = {
         "patient_id": input_path.parent.name,
         "input": str(input_path),
