@@ -10,9 +10,11 @@ Resources (1)/
 training/
 testing/
 *.zip
+*.sh
 
 runs/
 wandb/
+logs/
 
 *.pt
 *.nii
@@ -20,3 +22,4 @@ wandb/
 *.png
 *.csv
 *.json
+*.zip
