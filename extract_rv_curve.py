@@ -58,8 +58,22 @@ def write_rv_curve_outputs(
     curve_path = output_dir / "area_curve.png"
     plt.figure(figsize=(9, 4))
     plt.plot(frame_indices, frame_areas, marker="o", linewidth=1.8)
-    plt.scatter([max_frame], [frame_areas[max_frame - 1]], color="red", label=f"pred max frame={max_frame}")
-    plt.scatter([min_frame], [frame_areas[min_frame - 1]], color="blue", label=f"pred min frame={min_frame}")
+    plt.scatter(
+        [max_frame],
+        [frame_areas[max_frame - 1]],
+        color="red",
+        marker="^",
+        s=120,
+        label=f"pred max frame={max_frame}",
+    )
+    plt.scatter(
+        [min_frame],
+        [frame_areas[min_frame - 1]],
+        color="blue",
+        marker="v",
+        s=120,
+        label=f"pred min frame={min_frame}",
+    )
     if "ED" in info_cfg and 1 <= info_cfg["ED"] <= len(frame_areas):
         gt_ed_frame = info_cfg["ED"]
         gt_ed_area = frame_areas[gt_ed_frame - 1]
@@ -68,6 +82,7 @@ def write_rv_curve_outputs(
             [gt_ed_area],
             facecolors="none",
             edgecolors="darkred",
+            marker="s",
             s=130,
             linewidths=2.2,
             label=f"GT ED frame={gt_ed_frame}, area={gt_ed_area}",
@@ -80,6 +95,7 @@ def write_rv_curve_outputs(
             [gt_es_area],
             facecolors="none",
             edgecolors="navy",
+            marker="D",
             s=130,
             linewidths=2.2,
             label=f"GT ES frame={gt_es_frame}, area={gt_es_area}",
