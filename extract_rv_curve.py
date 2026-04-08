@@ -107,10 +107,19 @@ def write_rv_curve_outputs(
     }
     if include_pred_path:
         summary["artifacts"]["pred_masks_4d"] = str(output_dir / "pred_masks_4d.nii.gz")
-    if "ED" in info_cfg:
+    if "ED" in info_cfg and 1 <= info_cfg["ED"] <= len(frame_areas):
         summary["reference_ed_frame_1_based"] = info_cfg["ED"]
-    if "ES" in info_cfg:
+        summary["reference_ed_area_pixels"] = frame_areas[info_cfg["ED"] - 1]
+    if "ES" in info_cfg and 1 <= info_cfg["ES"] <= len(frame_areas):
         summary["reference_es_frame_1_based"] = info_cfg["ES"]
+        summary["reference_es_area_pixels"] = frame_areas[info_cfg["ES"] - 1]
+    if "ED" in info_cfg and "ES" in info_cfg and all(1 <= info_cfg[key] <= len(frame_areas) for key in ("ED", "ES")):
+        summary["frame_error_vs_reference"] = {
+            "max_minus_ed": max_frame - info_cfg["ED"],
+            "min_minus_es": min_frame - info_cfg["ES"],
+            "abs_max_minus_ed": abs(max_frame - info_cfg["ED"]),
+            "abs_min_minus_es": abs(min_frame - info_cfg["ES"]),
+        }
 
     with (output_dir / "summary.json").open("w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
