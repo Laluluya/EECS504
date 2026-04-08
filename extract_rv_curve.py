@@ -62,25 +62,27 @@ def write_rv_curve_outputs(
     plt.scatter([min_frame], [frame_areas[min_frame - 1]], color="blue", label=f"pred min frame={min_frame}")
     if "ED" in info_cfg and 1 <= info_cfg["ED"] <= len(frame_areas):
         gt_ed_frame = info_cfg["ED"]
+        gt_ed_area = frame_areas[gt_ed_frame - 1]
         plt.scatter(
             [gt_ed_frame],
-            [frame_areas[gt_ed_frame - 1]],
+            [gt_ed_area],
             facecolors="none",
             edgecolors="darkred",
             s=130,
             linewidths=2.2,
-            label=f"GT ED frame={gt_ed_frame}",
+            label=f"GT ED frame={gt_ed_frame}, area={gt_ed_area}",
         )
     if "ES" in info_cfg and 1 <= info_cfg["ES"] <= len(frame_areas):
         gt_es_frame = info_cfg["ES"]
+        gt_es_area = frame_areas[gt_es_frame - 1]
         plt.scatter(
             [gt_es_frame],
-            [frame_areas[gt_es_frame - 1]],
+            [gt_es_area],
             facecolors="none",
             edgecolors="navy",
             s=130,
             linewidths=2.2,
-            label=f"GT ES frame={gt_es_frame}",
+            label=f"GT ES frame={gt_es_frame}, area={gt_es_area}",
         )
     plt.xlabel("Frame (1-based)")
     plt.ylabel("Predicted area (pixels)")
