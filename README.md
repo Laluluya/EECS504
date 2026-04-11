@@ -67,6 +67,16 @@ python evaluate_labeled_frames.py \
   --output-dir runs/testing_labeled_eval
 ```
 
+This writes:
+
+- `summary.json`
+- `overall_metrics.json`
+- `per_patient_metrics.json`
+- `per_patient_metrics.csv`
+- `per_labeled_frame_metrics.csv`
+- `overall_dice.png`
+- `per_patient_macro_dice.png`
+
 ## RV area curve
 
 ```bash
