@@ -6,6 +6,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 
@@ -60,6 +61,45 @@ def dice_from_stats(stats: dict[str, list[float]], num_classes: int, eps: float 
     return result
 
 
+def write_overall_plot(overall_metrics: dict[str, float], output_path: Path) -> None:
+    keys = [
+        "dice_rv_cavity",
+        "dice_myocardium",
+        "dice_lv_cavity",
+        "macro_dice_fg",
+    ]
+    labels = ["RV", "Myo", "LV", "Macro FG"]
+    values = [overall_metrics[key] for key in keys]
+
+    plt.figure(figsize=(7, 4))
+    bars = plt.bar(labels, values, color=["#dc143c", "#ffbf00", "#4169e1", "#2f4f4f"])
+    plt.ylim(0.0, 1.0)
+    plt.ylabel("Dice")
+    plt.title("Overall Dice on Labeled Frames")
+    plt.grid(axis="y", alpha=0.3)
+    for bar, value in zip(bars, values):
+        plt.text(bar.get_x() + bar.get_width() / 2.0, value + 0.02, f"{value:.3f}", ha="center", va="bottom")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=180)
+    plt.close()
+
+
+def write_per_patient_plot(per_patient_rows: list[dict[str, float | str]], output_path: Path) -> None:
+    patient_ids = [str(row["patient_id"]) for row in per_patient_rows]
+    macro_scores = [float(row["macro_dice_fg"]) for row in per_patient_rows]
+
+    plt.figure(figsize=(max(10, len(patient_ids) * 0.22), 4.5))
+    plt.plot(range(len(patient_ids)), macro_scores, marker="o", linewidth=1.6, color="#2f4f4f")
+    plt.xticks(range(len(patient_ids)), patient_ids, rotation=90)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel("Macro Dice (FG)")
+    plt.title("Per-Patient Macro Dice on Labeled Frames")
+    plt.grid(axis="y", alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=180)
+    plt.close()
+
+
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -98,6 +138,7 @@ def main() -> None:
                 update_stats(frame_stats[(patient_id, frame_id)], pred, target, args.num_classes)
 
     per_patient_path = args.output_dir / "per_patient_metrics.csv"
+    per_patient_rows: list[dict[str, float | str]] = []
     with per_patient_path.open("w", encoding="utf-8", newline="") as f:
         fieldnames = ["patient_id", "macro_dice_fg"] + [
             f"dice_{CLASS_NAMES.get(cls, f'class_{cls}')}" for cls in range(1, args.num_classes)
@@ -108,6 +149,7 @@ def main() -> None:
             row = {"patient_id": patient_id}
             row.update(dice_from_stats(patient_stats[patient_id], args.num_classes))
             writer.writerow(row)
+            per_patient_rows.append(row)
 
     per_frame_path = args.output_dir / "per_labeled_frame_metrics.csv"
     with per_frame_path.open("w", encoding="utf-8", newline="") as f:
@@ -125,6 +167,32 @@ def main() -> None:
         dice_from_stats(patient_stats[patient_id], args.num_classes)["macro_dice_fg"]
         for patient_id in patient_stats
     ]
+    overall_metrics = dice_from_stats(overall_stats, args.num_classes)
+
+    overall_json_path = args.output_dir / "overall_metrics.json"
+    per_patient_json_path = args.output_dir / "per_patient_metrics.json"
+    overall_plot_path = args.output_dir / "overall_dice.png"
+    per_patient_plot_path = args.output_dir / "per_patient_macro_dice.png"
+
+    overall_json = {
+        "checkpoint": str(args.checkpoint),
+        "data_root": str(args.data_root),
+        "device": str(device),
+        "num_slices": len(examples),
+        "num_patients": len(patient_stats),
+        "num_labeled_frame_volumes": len(labeled_frames),
+        "metrics": overall_metrics,
+        "mean_macro_dice_fg_over_patients": sum(patient_macro_scores) / len(patient_macro_scores),
+    }
+    with overall_json_path.open("w", encoding="utf-8") as f:
+        json.dump(overall_json, f, indent=2)
+
+    with per_patient_json_path.open("w", encoding="utf-8") as f:
+        json.dump(per_patient_rows, f, indent=2)
+
+    write_overall_plot(overall_metrics, overall_plot_path)
+    write_per_patient_plot(per_patient_rows, per_patient_plot_path)
+
     summary = {
         "checkpoint": str(args.checkpoint),
         "data_root": str(args.data_root),
@@ -132,11 +200,15 @@ def main() -> None:
         "num_slices": len(examples),
         "num_patients": len(patient_stats),
         "num_labeled_frame_volumes": len(labeled_frames),
-        "overall": dice_from_stats(overall_stats, args.num_classes),
+        "overall": overall_metrics,
         "mean_macro_dice_fg_over_patients": sum(patient_macro_scores) / len(patient_macro_scores),
         "artifacts": {
+            "overall_metrics_json": str(overall_json_path),
+            "per_patient_metrics_json": str(per_patient_json_path),
             "per_patient_metrics": str(per_patient_path),
             "per_labeled_frame_metrics": str(per_frame_path),
+            "overall_dice_plot": str(overall_plot_path),
+            "per_patient_macro_dice_plot": str(per_patient_plot_path),
         },
     }
     with (args.output_dir / "summary.json").open("w", encoding="utf-8") as f:
