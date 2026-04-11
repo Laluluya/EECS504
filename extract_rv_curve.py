@@ -31,6 +31,15 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def load_gt_frame_area(patient_dir: Path, patient_id: str, frame_idx_1_based: int, target_class: int) -> int | None:
+    gt_path = patient_dir / f"{patient_id}_frame{frame_idx_1_based:02d}_gt.nii.gz"
+    if not gt_path.exists():
+        return None
+    gt_mask = nib.load(str(gt_path)).get_fdata()
+    gt_mask = np.rint(gt_mask).astype(np.int64)
+    return int((gt_mask == target_class).sum())
+
+
 def write_rv_curve_outputs(
     predictions: np.ndarray,
     input_path: Path,
@@ -46,7 +55,9 @@ def write_rv_curve_outputs(
     ]
     max_frame = int(np.argmax(frame_areas)) + 1
     min_frame = int(np.argmin(frame_areas)) + 1
-    info_cfg = parse_info_cfg(input_path.parent / "Info.cfg")
+    patient_dir = input_path.parent
+    patient_id = patient_dir.name
+    info_cfg = parse_info_cfg(patient_dir / "Info.cfg")
 
     csv_path = output_dir / "frame_areas.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as f:
@@ -76,7 +87,9 @@ def write_rv_curve_outputs(
     )
     if "ED" in info_cfg and 1 <= info_cfg["ED"] <= len(frame_areas):
         gt_ed_frame = info_cfg["ED"]
-        gt_ed_area = frame_areas[gt_ed_frame - 1]
+        gt_ed_area = load_gt_frame_area(patient_dir, patient_id, gt_ed_frame, target_class)
+        if gt_ed_area is None:
+            gt_ed_area = frame_areas[gt_ed_frame - 1]
         plt.scatter(
             [gt_ed_frame],
             [gt_ed_area],
@@ -89,7 +102,9 @@ def write_rv_curve_outputs(
         )
     if "ES" in info_cfg and 1 <= info_cfg["ES"] <= len(frame_areas):
         gt_es_frame = info_cfg["ES"]
-        gt_es_area = frame_areas[gt_es_frame - 1]
+        gt_es_area = load_gt_frame_area(patient_dir, patient_id, gt_es_frame, target_class)
+        if gt_es_area is None:
+            gt_es_area = frame_areas[gt_es_frame - 1]
         plt.scatter(
             [gt_es_frame],
             [gt_es_area],
@@ -110,7 +125,7 @@ def write_rv_curve_outputs(
     plt.close()
 
     summary = {
-        "patient_id": input_path.parent.name,
+        "patient_id": patient_id,
         "input": str(input_path),
         "input_shape": list(input_shape),
         "target_class": target_class,
@@ -127,10 +142,18 @@ def write_rv_curve_outputs(
         summary["artifacts"]["pred_masks_4d"] = str(output_dir / "pred_masks_4d.nii.gz")
     if "ED" in info_cfg and 1 <= info_cfg["ED"] <= len(frame_areas):
         summary["reference_ed_frame_1_based"] = info_cfg["ED"]
-        summary["reference_ed_area_pixels"] = frame_areas[info_cfg["ED"] - 1]
+        gt_ed_area = load_gt_frame_area(patient_dir, patient_id, info_cfg["ED"], target_class)
+        summary["reference_ed_area_pixels"] = (
+            gt_ed_area if gt_ed_area is not None else frame_areas[info_cfg["ED"] - 1]
+        )
+        summary["reference_ed_area_source"] = "gt_mask" if gt_ed_area is not None else "pred_curve_at_gt_frame"
     if "ES" in info_cfg and 1 <= info_cfg["ES"] <= len(frame_areas):
         summary["reference_es_frame_1_based"] = info_cfg["ES"]
-        summary["reference_es_area_pixels"] = frame_areas[info_cfg["ES"] - 1]
+        gt_es_area = load_gt_frame_area(patient_dir, patient_id, info_cfg["ES"], target_class)
+        summary["reference_es_area_pixels"] = (
+            gt_es_area if gt_es_area is not None else frame_areas[info_cfg["ES"] - 1]
+        )
+        summary["reference_es_area_source"] = "gt_mask" if gt_es_area is not None else "pred_curve_at_gt_frame"
     if "ED" in info_cfg and "ES" in info_cfg and all(1 <= info_cfg[key] <= len(frame_areas) for key in ("ED", "ES")):
         summary["frame_error_vs_reference"] = {
             "max_minus_ed": max_frame - info_cfg["ED"],
