@@ -92,6 +92,29 @@ python batch_extract_rv_curves.py \
   --output-dir runs/testing_rv_curves
 ```
 
+## Compute Dice For Two Masks
+
+```bash
+python compute_dice.py \
+  --pred runs/patient101_pred/pred_masks_4d.nii.gz \
+  --gt testing/patient101/patient101_4d_gt.nii.gz
+```
+
+If you want to save the result:
+
+```bash
+python compute_dice.py \
+  --pred pred.nii.gz \
+  --gt gt.nii.gz \
+  --output-json runs/dice_summary.json
+```
+
+## Unified Results JSON
+
+Use [RESULTS_JSON_PROMPT.md](/Users/nihairong/Documents/umich/2026win/eecs504/medical/RESULTS_JSON_PROMPT.md)
+as the prompt template when asking other models to normalize their experiment
+outputs into one shared JSON format.
+
 ## Weights & Biases
 
 Online logging:
