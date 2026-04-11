@@ -102,6 +102,24 @@ python batch_extract_rv_curves.py \
   --output-dir runs/testing_rv_curves
 ```
 
+## LV area curve
+
+```bash
+python extract_lv_curve.py \
+  --checkpoint runs/full/best.pt \
+  --input "testing/patient101/patient101_4d.nii.gz" \
+  --output-dir runs/patient101_lv_curve
+```
+
+Batch extraction for every testing patient:
+
+```bash
+python batch_extract_lv_curves.py \
+  --checkpoint runs/full/best.pt \
+  --data-root testing \
+  --output-dir runs/testing_lv_curves
+```
+
 ## Compute Dice For Two Masks
 
 ```bash
